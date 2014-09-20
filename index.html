@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<body>
+  <input type="button" value="Update" onClick="UpdateData()">
+  <div id="map"></div>
+<script src="js/d3.v3.min.js"></script>
+<script src="js/topojson.v1.min.js"></script>
+<script src="scripts/markerMap.js"></script>
+<script>
+
+var width = 960,
+    height = 600;
+//[longitude, latitude].
+var n  = 5;
+function getRendomData(){
+  var dataset1 = [];
+  n = n == 5 ? 10 : 5;
+  for(var i = 0; i< n;i++){
+    var lat = -1*(Math.random() * (121.490402 - 80.389809) + 80.389809).toFixed(6);
+    var lng = 1 * (Math.random() * (45.786453 - 32.62728) + 32.62728).toFixed(6);
+    var _obj = {};
+    _obj.name = "test 1";
+    _obj.location = [];
+    _obj.location[0] = lat;
+    _obj.location[1] = lng;
+    dataset1.push(_obj);
+  }
+  return dataset1;
+}  
+
+var mapOptions = {};
+mapOptions.width = width;
+mapOptions.height = height;
+mapOptions.selector = '#map';
+mapOptions.data = getRendomData();
+mapOptions.topojsonurl = 'data/usa4.topo.json';
+
+var MP = markerMap(mapOptions);
+MP.render();
+
+function UpdateData(){
+  MP.updateData(getRendomData());
+}
+
+
+</script>
