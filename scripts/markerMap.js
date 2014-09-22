@@ -72,21 +72,43 @@ function markerMap(options) {
             .attr("height", _this._height)
             .on("click", _this.reset);
 
+        _this.informationBox = _this.svg.append("g")
+                .attr("class", "informationBox")
+                .style("opacity", 0)
+                .attr("transform", function(d) {return "translate(" + [10,(_this._height - 50 )] + ")"; });
+
         _this.svg = _this.svg.append('g')
-        .attr("class", "markerMap")
+                .attr("class", "markerMap")
 
         _this.states = _this.svg.append("g")
                 .attr("class", "states");
 
         _this.labels = _this.svg.append("g")
-          .attr("class", "labels")
+                .attr("class", "labels")
 
         _this.markers = _this.svg.append("g")
                 .attr("class", "markers");
 
+        
+
+        _this.informationRect = _this.informationBox.append('rect')
+            .style('fill','rgba(255, 255, 255,0.6)')
+            .style('stroke','#666')
+            .style('pointer-events','none')
+            .attr("rx", 20)
+            .attr("ry", 20)
+            .attr("width", 100)
+            .attr("height", 40);
+
+        _this.informationText = _this.informationBox.append("text")
+            .attr("x", 12)
+            .attr("y", 25)
+            .text("");    
+
         _this.active = d3.select(null);
         _this.isRendered = false;
         var _mapData = null;
+
         _this.render = function() {
             if (! this._data) return;
 
@@ -105,30 +127,42 @@ function markerMap(options) {
         };
 
         _this.updateData = function(_newData) {
-            var _oldMarker = _this.markers.selectAll("circle");
+            var _oldMarker = _this.markers.selectAll("image");
 
             _oldMarker.transition()
-                .duration(500).attr("r", "0px").remove();
+                .duration(500)
+                .attr('width', 0)
+                .attr('height', 0)
+                .remove();
 
             _this._data =_newData;
 
             var _marker = _this.markers
-              .selectAll("circle")
+              .selectAll("image")
                 .data(_newData);
 
-            _marker.enter().append("circle")
+            _marker.enter().append("image")
                 .attr("transform", function(d) {return "translate(" + [_this.projection(d.location)[0],_this.projection(d.location)[1]] + ")"; })
-                .attr("r", "0px")
-                .attr("fill", "red");
+                .attr("xlink:href","images/marker.png")
+                .style('cursor',"pointer")
+                .attr('width', 0)
+                .attr('height', 0);
 
             _marker.transition()
                 .duration(500)
                 .attr("transform", function(d) {return "translate(" + [_this.projection(d.location)[0],_this.projection(d.location)[1]] + ")"; })
-                .attr("r", "8px")
-                .attr("fill", "red")
+                .attr('width', 20)
+                .attr('height', 24);
+
+                $('svg .markers image').tipsy({ 
+                  gravity: 's', 
+                  html: true, 
+                  title: function() {
+                    var d = this.__data__;
+                    return ' '+d.name+""; 
+                  }
+                });
         };
-
-
 
         _this.drawMap = function(_json){
 
@@ -143,6 +177,8 @@ function markerMap(options) {
               .style('cursor',"pointer")
               .style('opacity',0)
               .attr("d",this.path)
+              .on("mouseenter", this.mouseEnter)
+              .on("mouseleave", this.mouseOut)
               .on("click", this.clicked);
 
               _this.updateData(_this._data);
@@ -170,6 +206,23 @@ function markerMap(options) {
             //     .attr("transform", function(d) { return "translate(" + _this.path.centroid(d) + ")"; });
             //     _this.labels.exit().transition().duration(750).remove();
         };
+
+        _this.mouseEnter = function(d){
+          _this.informationText.text(""+d.properties.name);
+          var _textLenght = _this.informationText.node().getComputedTextLength();
+          _this.informationRect.attr("width", _textLenght + 30)
+          // console.log();parentNode
+          // console.log(d3.select(_this._selector+" .informationBox")[0][0].parentNode);
+          // _this.informationBox.attr("transform", function(d) {return "translate(" + [10,(_this._height - 50 )] + ")"; });
+          _this.informationBox.style("opacity", 1);
+          d3.select(_this._selector+" .informationBox")[0][0].parentNode.appendChild(d3.select(_this._selector+" .informationBox")[0][0]);
+
+        }
+
+        _this.mouseOut = function(d){
+          _this.informationText.text("")
+          _this.informationBox.style("opacity", 0);
+        }
 
         // getter setter section 
         _this.datam = function(_value) {
