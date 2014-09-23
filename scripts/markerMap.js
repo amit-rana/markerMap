@@ -1,26 +1,65 @@
 function markerMap(options) {
-
+        /**
+         * This is main class object that will be
+         * return as model at end
+         * */
         var _this = {};
+
+        /**
+         * default selector is body
+         * passing selector likle any id or class will be render map
+         * in selected selector dom element
+         * */
         _this._selector = 'body';
         if(options.selector){
             _this._selector = options.selector;
         }
+
+        /**
+         * Default marker data is null
+         * data is array of objects which contains
+         * marker details and information
+         * */
         _this._data = null;
         if(options.data){
             _this._data = options.data;
         }
+
+         /**
+          *  here At current stage we set default topojson is but
+          *  we need proper data to set default values
+          *  passing topojson with map options will load map from selected topojson
+          * */
         _this._topojsonurl = null;  
         if(options.topojsonurl){
             _this._topojsonurl = options.topojsonurl;
-        }      
+        }
+
+        /**
+         * Map height : default value is 600
+         * */
         _this._height = 600;
         if(options.height){
             _this._height = options.height;
-        } 
+        }
+
+        /**
+         * Map width : default value is 960
+         * */
         _this._width = 960;
         if(options.width){
             _this._width = options.width;
-        } 
+        }
+
+       /**
+        * Marker click listener callback
+        *   In case of outer script need top listen marker click event
+        *   than pass the callback funcation
+        * */
+       _this.markerClickCallback = null;
+       if(options.markerClickCallback){
+           _this.markerClickCallback = options.markerClickCallback;
+       }
 
         _this.projection = d3.geo.albersUsa()
             .scale(1280)
@@ -32,8 +71,12 @@ function markerMap(options) {
         _this.path = d3.geo.path()
             .projection( _this.projection);
 
-        _this.clicked = function(d) {
-          if (_this.active.node() === this) return _this.reset();
+         /**
+          * Click handler for areas on map
+          * i.e. state, county
+          * */
+        _this.markerMapAreaClickHandler = function(d) {
+          if (_this.active.node() === this) return _this.markerMapAreaResetHandler();
           _this.active.classed("active", false);
           _this.active = d3.select(this).classed("active", true);
 
@@ -50,8 +93,11 @@ function markerMap(options) {
               .style("stroke-width", 1.5 / scale + "px")
               .attr("transform", "translate(" + translate + ")scale(" + scale + ")");
         }
-        
-        _this.reset = function() {
+
+        /**
+         * markerMapAreaResetHandler for reset area zoom
+         * */
+        _this.markerMapAreaResetHandler = function() {
           _this.active.classed("active", false);
           _this.active = d3.select(null);
           d3.selectAll('.markerMap').transition()
@@ -70,7 +116,7 @@ function markerMap(options) {
             .style('pointer-events','all')
             .attr("width", _this._width)
             .attr("height", _this._height)
-            .on("click", _this.reset);
+            .on("click", _this.markerMapAreaResetHandler);
 
         _this.informationBox = _this.svg.append("g")
                 .attr("class", "informationBox")
@@ -88,8 +134,6 @@ function markerMap(options) {
 
         _this.markers = _this.svg.append("g")
                 .attr("class", "markers");
-
-        
 
         _this.informationRect = _this.informationBox.append('rect')
             .style('fill','rgba(255, 255, 255,0.6)')
@@ -146,7 +190,8 @@ function markerMap(options) {
                 .attr("xlink:href","images/marker.png")
                 .style('cursor',"pointer")
                 .attr('width', 0)
-                .attr('height', 0);
+                .attr('height', 0)
+                .on("click", this.markerClickHandler);
 
             _marker.transition()
                 .duration(500)
@@ -177,9 +222,9 @@ function markerMap(options) {
               .style('cursor',"pointer")
               .style('opacity',0)
               .attr("d",this.path)
-              .on("mouseenter", this.mouseEnter)
-              .on("mouseleave", this.mouseOut)
-              .on("click", this.clicked);
+              .on("mouseenter", this.markerMapAreaMouseEnterHandler)
+              .on("mouseleave", this.markerMapAreaMouseOutHandler)
+              .on("click", this.markerMapAreaClickHandler);
 
               _this.updateData(_this._data);
 
@@ -207,24 +252,30 @@ function markerMap(options) {
             //     _this.labels.exit().transition().duration(750).remove();
         };
 
-        _this.mouseEnter = function(d){
+        _this.markerMapAreaMouseEnterHandler = function(d){
           _this.informationText.text(""+d.properties.name);
           var _textLenght = _this.informationText.node().getComputedTextLength();
           _this.informationRect.attr("width", _textLenght + 30)
-          // console.log();parentNode
-          // console.log(d3.select(_this._selector+" .informationBox")[0][0].parentNode);
-          // _this.informationBox.attr("transform", function(d) {return "translate(" + [10,(_this._height - 50 )] + ")"; });
           _this.informationBox.style("opacity", 1);
           d3.select(_this._selector+" .informationBox")[0][0].parentNode.appendChild(d3.select(_this._selector+" .informationBox")[0][0]);
 
         }
 
-        _this.mouseOut = function(d){
+        _this.markerMapAreaMouseOutHandler = function(d){
           _this.informationText.text("")
           _this.informationBox.style("opacity", 0);
         }
 
-        // getter setter section 
+        _this.markerClickHandler = function(d){
+            // marker events
+
+            //call back if any listener is bind
+            if(_this.markerClickCallback){
+                _this.markerClickCallback(d);
+            }
+        }
+
+        // getter setter section
         _this.datam = function(_value) {
             if(_value) this._data = _value;
             return this._data;

@@ -4,6 +4,7 @@
 <head>
 
 <meta charset="utf-8">
+<title>Marker Map Model</title>
 <link href="style/tipsy.css" rel="stylesheet" type="text/css" />
 <style type="text/css">
 .tipsy { font-size: 18px;}
@@ -45,6 +46,9 @@ mapOptions.height = height;
 mapOptions.selector = '#map';
 mapOptions.data = getRendomData();
 mapOptions.topojsonurl = 'data/usa4.topo.json';
+mapOptions.markerClickCallback = function(d){
+    console.log("callback after marker ");
+}
 
 var MP = markerMap(mapOptions);
 MP.render();
